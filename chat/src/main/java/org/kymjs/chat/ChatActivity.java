@@ -147,6 +147,9 @@ public class ChatActivity extends AppCompatActivity {
                         intent3.setComponent(componentName2);
                         startActivity(intent3);
                         break;
+                    case 3:
+                        break;
+
                 }
             }
         });
