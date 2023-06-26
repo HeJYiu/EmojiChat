@@ -13,12 +13,14 @@
         android:divider="@null"
         android:dividerHeight="3dp"
         android:scrollbarStyle="outsideOverlay"
-        android:transcriptMode="normal"/>
+        android:transcriptMode="normal" />
+<!--        android:background="@color/colorPrimary"-->
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#7fd8d8d8"/>
+        android:background="#7fd8d8d8" />
+<!--        android:background="#7fd8d8d8"-->
 
     <org.kymjs.chat.widget.KJChatKeyboard
         android:id="@+id/chat_msg_input_box"

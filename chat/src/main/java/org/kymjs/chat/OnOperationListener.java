@@ -16,6 +16,7 @@
 package org.kymjs.chat;
 
 
+import org.kymjs.chat.bean.ChatMessage;
 import org.kymjs.chat.bean.Emojicon;
 import org.kymjs.chat.bean.Faceicon;
 
@@ -26,7 +27,9 @@ import org.kymjs.chat.bean.Faceicon;
  */
 public interface OnOperationListener {
 
-    void send(String content);
+    void send(ChatMessage chatMessage);
+
+    void receive(ChatMessage chatMessage);
 
     void selectedFace(Faceicon content);
 

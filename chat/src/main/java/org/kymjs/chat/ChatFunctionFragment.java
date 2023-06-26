@@ -30,6 +30,7 @@ public class ChatFunctionFragment extends SupportFragment {
 
     private LinearLayout layout1;
     private LinearLayout layout2;
+    private LinearLayout layout3;
 
     private OnOperationListener listener;
 
@@ -44,6 +45,7 @@ public class ChatFunctionFragment extends SupportFragment {
         super.initWidget(parentView);
         layout1 = (LinearLayout) parentView.findViewById(R.id.chat_menu_images);
         layout2 = (LinearLayout) parentView.findViewById(R.id.chat_menu_photo);
+        layout3 = (LinearLayout) parentView.findViewById(R.id.chat_menu_voice_call);
 
         layout1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,6 +57,12 @@ public class ChatFunctionFragment extends SupportFragment {
             @Override
             public void onClick(View v) {
                 clickMenu(1);
+            }
+        });
+        layout3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickMenu(2);
             }
         });
     }

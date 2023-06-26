@@ -4,54 +4,103 @@
                 android:layout_height="match_parent"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp">
-
-    <LinearLayout
-        android:id="@+id/chat_menu_images"
-        android:layout_width="wrap_content"
+    <GridLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="10dp"
-        android:clickable="true"
-        android:focusable="false"
-        android:orientation="vertical">
+        android:layout_marginTop="10dp">
 
-        <ImageView
+        <LinearLayout
+            android:id="@+id/chat_menu_images"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/icon_chat_image"/>
+            android:layout_columnWeight="1"
+            android:clickable="true"
+            android:focusable="false"
+            android:orientation="vertical">
 
-        <TextView
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"                android:layout_gravity="center_horizontal"
+                android:src="@drawable/icon_chat_image"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:text="图片"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chat_menu_photo"
             android:layout_width="wrap_content"
+            android:layout_columnWeight="1"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="5dp"
-            android:text="图片"/>
-    </LinearLayout>
+            android:layout_toRightOf="@id/chat_menu_images"
+            android:clickable="true"
+            android:focusable="false"
+            android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/chat_menu_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_toRightOf="@id/chat_menu_images"
-        android:clickable="true"
-        android:focusable="false"
-        android:orientation="vertical">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"                android:layout_gravity="center_horizontal"
+                android:src="@drawable/icon_chat_photo"/>
 
-        <ImageView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:text="拍照"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chat_menu_voice_call"
             android:layout_width="wrap_content"
+            android:layout_columnWeight="1"
             android:layout_height="wrap_content"
-            android:src="@drawable/icon_chat_photo"/>
+            android:layout_toRightOf="@id/chat_menu_images"
+            android:clickable="true"
+            android:focusable="false"
+            android:orientation="vertical">
 
-        <TextView
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/icon_chat_voice"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:text="语音通话"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chat_menu_video_call"
             android:layout_width="wrap_content"
+            android:layout_columnWeight="1"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="5dp"
-            android:text="拍照"/>
-    </LinearLayout>
+            android:layout_toRightOf="@id/chat_menu_images"
+            android:clickable="true"
+            android:focusable="false"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/icon_chat_video"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:text="视频通话"/>
+        </LinearLayout>
+    </GridLayout>
 
 </RelativeLayout>

@@ -30,7 +30,7 @@ import org.kymjs.chat.ChatActivity.OnChatItemClickListener;
 import org.kymjs.chat.R;
 import org.kymjs.chat.StringUtils;
 import org.kymjs.chat.UrlUtils;
-import org.kymjs.chat.bean.Message;
+import org.kymjs.chat.bean.ChatMessage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,20 +41,20 @@ import java.util.List;
  */
 public class ChatAdapter extends BaseAdapter {
 
-    private final Context cxt;
-    private List<Message> datas = null;
+    private final Context context;
+    private List<ChatMessage> datas = null;
     private OnChatItemClickListener listener;
 
-    public ChatAdapter(Context cxt, List<Message> datas, OnChatItemClickListener listener) {
-        this.cxt = cxt;
+    public ChatAdapter(Context context, List<ChatMessage> datas, OnChatItemClickListener listener) {
+        this.context = context;
         if (datas == null) {
-            datas = new ArrayList<Message>(0);
+            datas = new ArrayList<ChatMessage>(0);
         }
         this.datas = datas;
         this.listener = listener;
     }
 
-    public void refresh(List<Message> datas) {
+    public void refresh(List<ChatMessage> datas) {
         if (datas == null) {
             datas = new ArrayList<>(0);
         }
@@ -90,13 +90,13 @@ public class ChatAdapter extends BaseAdapter {
     @Override
     public View getView(final int position, View v, ViewGroup parent) {
         final ViewHolder holder;
-        final Message data = datas.get(position);
+        final ChatMessage data = datas.get(position);
         if (v == null) {
             holder = new ViewHolder();
             if (data.getIsSend()) {
-                v = View.inflate(cxt, R.layout.chat_item_list_right, null);
+                v = View.inflate(context, R.layout.chat_item_list_right, null);
             } else {
-                v = View.inflate(cxt, R.layout.chat_item_list_left, null);
+                v = View.inflate(context, R.layout.chat_item_list_left, null);
             }
             holder.layout_content = (RelativeLayout) v.findViewById(R.id.chat_item_layout_content);
             holder.img_avatar = (ImageView) v.findViewById(R.id.chat_item_avatar);
@@ -110,12 +110,13 @@ public class ChatAdapter extends BaseAdapter {
             holder = (ViewHolder) v.getTag();
         }
 
-        holder.tv_date.setText(StringUtils.friendlyTime(StringUtils.getDataTime("yyyy-MM-dd " +
-                "HH:mm:ss")));
+        holder.tv_date.setText(StringUtils.friendlyTime(data.getTime()));
+//        holder.tv_date.setText(StringUtils.friendlyTime(StringUtils.getDataTime("yyyy-MM-dd " +
+//                "HH:mm:ss")));
         holder.tv_date.setVisibility(View.VISIBLE);
 
         //如果是文本类型，则隐藏图片，如果是图片则隐藏文本
-        if (data.getType() == Message.MSG_TYPE_TEXT) {
+        if (data.getType() == ChatMessage.MSG_TYPE_TEXT) {
             holder.img_chatimage.setVisibility(View.GONE);
             holder.tv_chatcontent.setVisibility(View.VISIBLE);
             if (data.getContent().contains("href")) {
@@ -128,14 +129,14 @@ public class ChatAdapter extends BaseAdapter {
             holder.img_chatimage.setVisibility(View.VISIBLE);
             String url = data.getContent();
             if (url != null && url.startsWith("http")) {
-                Glide.with(cxt).load(url).into(holder.img_chatimage);
+                Glide.with(context).load(url).into(holder.img_chatimage);
             } else {
-                Glide.with(cxt).load(new File(url)).into(holder.img_chatimage);
+                Glide.with(context).load(new File(url)).into(holder.img_chatimage);
             }
         }
 
         //如果是表情或图片，则不显示气泡，如果是图片则显示气泡
-        if (data.getType() != Message.MSG_TYPE_TEXT) {
+        if (data.getType() != ChatMessage.MSG_TYPE_TEXT) {
             holder.layout_content.setBackgroundResource(android.R.color.transparent);
         } else {
             if (data.getIsSend()) {
@@ -147,9 +148,9 @@ public class ChatAdapter extends BaseAdapter {
 
         //显示头像
         if (data.getIsSend()) {
-            Glide.with(cxt).load(data.getFromUserAvatar()).placeholder(R.drawable.default_head).into(holder.img_avatar);
+            Glide.with(context).load(data.getFromUserAvatar()).placeholder(R.drawable.default_head).into(holder.img_avatar);
         } else {
-            Glide.with(cxt).load(data.getToUserAvatar()).placeholder(R.drawable.default_head).into(holder.img_avatar);
+            Glide.with(context).load(data.getToUserAvatar()).placeholder(R.drawable.default_head).into(holder.img_avatar);
         }
 
         if (listener != null) {
@@ -163,10 +164,10 @@ public class ChatAdapter extends BaseAdapter {
                 @Override
                 public void onClick(View v) {
                     switch (data.getType()) {
-                        case Message.MSG_TYPE_PHOTO:
+                        case ChatMessage.MSG_TYPE_PHOTO:
                             listener.onPhotoClick(position);
                             break;
-                        case Message.MSG_TYPE_FACE:
+                        case ChatMessage.MSG_TYPE_FACE:
                             listener.onFaceClick(position);
                             break;
                     }
@@ -176,15 +177,15 @@ public class ChatAdapter extends BaseAdapter {
 
         //消息发送的状态
         switch (data.getState()) {
-            case Message.MSG_STATE_FAIL:
+            case ChatMessage.MSG_STATE_FAIL:
                 holder.progress.setVisibility(View.GONE);
                 holder.img_sendfail.setVisibility(View.VISIBLE);
                 break;
-            case Message.MSG_STATE_SUCCESS:
+            case ChatMessage.MSG_STATE_SUCCESS:
                 holder.progress.setVisibility(View.GONE);
                 holder.img_sendfail.setVisibility(View.GONE);
                 break;
-            case Message.MSG_STATE_SENDING:
+            case ChatMessage.MSG_STATE_SENDING:
                 holder.progress.setVisibility(View.VISIBLE);
                 holder.img_sendfail.setVisibility(View.GONE);
                 break;

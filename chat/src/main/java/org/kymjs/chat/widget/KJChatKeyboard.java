@@ -17,16 +17,34 @@ import org.kymjs.chat.OnOperationListener;
 import org.kymjs.chat.R;
 import org.kymjs.chat.SoftKeyboardStateHelper;
 import org.kymjs.chat.adapter.FaceCategroyAdapter;
+import org.kymjs.chat.bean.ChatMessage;
+import org.kymjs.chat.bean.Request;
+import org.kymjs.chat.bean.Response;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 控件主界面
- *
- * @author kymjs (http://www.kymjs.com/)
  */
 public class KJChatKeyboard extends RelativeLayout implements
         SoftKeyboardStateHelper.SoftKeyboardStateListener {
+
+    //    private static final String FROM_USER = "Jerry";
+    private static final String FROM_USER = "Tom";
+    //    private static final String TO_USER = "Tom";
+    private static final String TO_USER = "Jerry";
+
 
     public interface OnToolBoxListener {
         void onShowFace();
@@ -61,6 +79,21 @@ public class KJChatKeyboard extends RelativeLayout implements
     private OnToolBoxListener mFaceListener;
     private SoftKeyboardStateHelper mKeyboardHelper;
 
+    private Socket sendSocket;
+    private Socket receiveSocket;
+
+    // 线程池
+    // 为了方便展示,此处直接采用线程池进行线程管理,而没有一个个开线程
+    private ExecutorService mThreadPool;
+
+    InputStream inputStream;
+    ObjectInputStream objectInputStream;
+    InputStreamReader inputStreamReader;
+    BufferedReader bufferedReader;
+
+    OutputStream outputStream;
+    ObjectOutputStream objectOutputStream;
+
     public KJChatKeyboard(Context context) {
         super(context);
         init(context);
@@ -80,7 +113,74 @@ public class KJChatKeyboard extends RelativeLayout implements
         this.context = context;
         View root = View.inflate(context, R.layout.chat_tool_box, null);
         this.addView(root);
+        mThreadPool = Executors.newCachedThreadPool();
+        connectToServer();
+        ReceiveMsg thread = new ReceiveMsg();
+        thread.start();
     }
+
+    private void connectToServer(){
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    sendSocket = new Socket("10.28.132.56", 8990);
+                    outputStream = sendSocket.getOutputStream();
+                    objectOutputStream = new ObjectOutputStream(outputStream);
+                    ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_TEXT,
+                            ChatMessage.MSG_STATE_SUCCESS, FROM_USER, "avatar", TO_USER, "avatar",
+                            FROM_USER, true, true, new Date(System.currentTimeMillis()));
+
+                    Request request = new Request();
+                    request.setAction("chat");
+                    request.setAttribute("msg", chatMessage);
+                    objectOutputStream.writeObject(request);
+                    objectOutputStream.flush();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
+    private class ReceiveMsg extends Thread{
+        @Override
+        public void run(){
+            try {
+                receiveSocket = new Socket("10.28.132.56", 8991);
+                OutputStream outputStream1 = receiveSocket.getOutputStream();
+                ObjectOutputStream objectOutputStream1 = new ObjectOutputStream(outputStream1);
+                ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_TEXT,
+                        ChatMessage.MSG_STATE_SUCCESS, FROM_USER, "avatar", TO_USER, "avatar",
+                        FROM_USER, true, true, new Date(System.currentTimeMillis()));
+
+                Request request = new Request();
+                request.setAction("chat");
+                request.setAttribute("msg", chatMessage);
+                objectOutputStream1.writeObject(request);
+                objectOutputStream1.flush();
+
+
+                inputStream = receiveSocket.getInputStream();
+                objectInputStream = new ObjectInputStream(inputStream);
+                while(true){
+                    Response response = (Response) objectInputStream.readObject();
+                    listener.receive((ChatMessage) response.getData("txtMsg"));
+                }
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
 
     @Override
     protected void onFinishInflate() {
@@ -108,10 +208,31 @@ public class KJChatKeyboard extends RelativeLayout implements
         mBtnSend.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (listener != null) {
-                    String content = mEtMsg.getText().toString();
-                    listener.send(content);
-                    mEtMsg.setText(null);
+                    final String content = mEtMsg.getText().toString();
+                    ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_TEXT,
+                            ChatMessage.MSG_STATE_SUCCESS, FROM_USER, "avatar", TO_USER, "avatar",
+                            content, true, true, new Date(System.currentTimeMillis()));
+                    if(!"".equals(content)) {
+                        mThreadPool.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Request request = new Request();
+                                    request.setAction("chat");
+                                    request.setAttribute("msg", chatMessage);
+                                    objectOutputStream.writeObject(request); // 发送请求
+                                    objectOutputStream.flush();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        });
+                        listener.send(chatMessage);
+                        mEtMsg.setText(null);
+                    }
                 }
             }
         });

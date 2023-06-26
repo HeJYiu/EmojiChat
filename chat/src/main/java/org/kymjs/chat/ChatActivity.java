@@ -15,7 +15,9 @@
  */
 package org.kymjs.chat;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,17 +33,25 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.kymjs.chat.adapter.ChatAdapter;
+import org.kymjs.chat.bean.ChatMessage;
 import org.kymjs.chat.bean.Emojicon;
 import org.kymjs.chat.bean.Faceicon;
-import org.kymjs.chat.bean.Message;
 import org.kymjs.chat.emoji.DisplayRules;
 import org.kymjs.chat.widget.KJChatKeyboard;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 聊天主界面
@@ -49,12 +59,17 @@ import java.util.Random;
 public class ChatActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE_GETIMAGE_BYSDCARD = 0x1;
+//    private static final String FROM_USER = "Jerry";
+    private static final String FROM_USER = "Tom";
+//    private static final String TO_USER = "Tom";
+    private static final String TO_USER = "Jerry";
 
     private KJChatKeyboard box;
     private ListView mRealListView;
 
-    List<Message> datas = new ArrayList<Message>();
+    List<ChatMessage> datas = new ArrayList<ChatMessage>();
     private ChatAdapter adapter;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,32 +77,48 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         box = (KJChatKeyboard) findViewById(R.id.chat_msg_input_box);
         mRealListView = (ListView) findViewById(R.id.chat_listview);
-
         mRealListView.setSelector(android.R.color.transparent);
         initMessageInputToolBox();
         initListView();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void initMessageInputToolBox() {
         box.setOnOperationListener(new OnOperationListener() {
             @Override
-            public void send(String content) {
-                Message message = new Message(Message.MSG_TYPE_TEXT, Message.MSG_STATE_SUCCESS,
-                        "Tom", "avatar", "Jerry",
-                        "avatar", content, true, true, new Date());
-                datas.add(message);
+            public void send(ChatMessage chatMessage) {
+                datas.add(chatMessage);
                 adapter.refresh(datas);
-                createReplayMsg(message);
+            }
+
+            @Override
+            public void receive(ChatMessage chatMessage) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(100 * (new Random().nextInt(3) + 1));
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    datas.add(chatMessage);
+                                    adapter.refresh(datas);
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
             }
 
             @Override
             public void selectedFace(Faceicon content) {
-                Message message = new Message(Message.MSG_TYPE_FACE, Message.MSG_STATE_SUCCESS,
-                        "Tom", "avatar", "Jerry", "avatar", content.getPath(), true, true, new
+                ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_FACE, ChatMessage.MSG_STATE_SUCCESS,
+                        FROM_USER, "avatar", TO_USER, "avatar", content.getPath(), true, true, new
                         Date());
-                datas.add(message);
+                datas.add(chatMessage);
                 adapter.refresh(datas);
-                createReplayMsg(message);
             }
 
             @Override
@@ -108,6 +139,13 @@ public class ChatActivity extends AppCompatActivity {
                         break;
                     case 1:
                         Toast.makeText(getApplication(), "跳转相机，只做演示", Toast.LENGTH_SHORT).show();
+                        goToCamara();
+                        break;
+                    case 2:
+                        ComponentName componentName2 = new ComponentName("org.sipdroid.sipua", "org.sipdroid.sipua.ui.Sipdroid");
+                        Intent intent3 = new Intent();
+                        intent3.setComponent(componentName2);
+                        startActivity(intent3);
                         break;
                 }
             }
@@ -132,60 +170,20 @@ public class ChatActivity extends AppCompatActivity {
         byte[] emoji = new byte[]{
                 (byte) 0xF0, (byte) 0x9F, (byte) 0x98, (byte) 0x81
         };
-        Message message = new Message(Message.MSG_TYPE_TEXT,
-                Message.MSG_STATE_SUCCESS, "\ue415", "avatar", "Jerry", "avatar",
+        ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_TEXT,
+                ChatMessage.MSG_STATE_SUCCESS, "\ue415", "avatar", FROM_USER, "avatar",
                 new String(emoji), false, true, new Date(System.currentTimeMillis()
                 - (1000 * 60 * 60 * 24) * 8));
-        Message message1 = new Message(Message.MSG_TYPE_TEXT,
-                Message.MSG_STATE_SUCCESS, "Tom", "avatar", "Jerry", "avatar",
-                "以后的版本支持链接高亮喔:http://www.kymjs.com支持http、https、svn、ftp开头的链接",
-                true, true, new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24) * 8));
-        Message message2 = new Message(Message.MSG_TYPE_PHOTO,
-                Message.MSG_STATE_SUCCESS, "Tom", "avatar", "Jerry", "avatar",
-                "https://kymjs.com/qiniu/image/logo_550x440.png",
-                false, true, new Date(
-                System.currentTimeMillis() - (1000 * 60 * 60 * 24) * 7));
-        Message message6 = new Message(Message.MSG_TYPE_TEXT,
-                Message.MSG_STATE_FAIL, "Tom", "avatar", "Jerry", "avatar",
-                "test send fail", true, false, new Date(
-                System.currentTimeMillis() - (1000 * 60 * 60 * 24) * 6));
-        Message message7 = new Message(Message.MSG_TYPE_TEXT,
-                Message.MSG_STATE_SENDING, "Tom", "avatar", "Jerry", "avatar",
-                "<a href=\"http://kymjs.com\">自定义链接</a>也是支持的", true, true, new Date(System.currentTimeMillis()
-                - (1000 * 60 * 60 * 24) * 6));
 
-        datas.add(message);
-        datas.add(message1);
-        datas.add(message2);
-        datas.add(message6);
-        datas.add(message7);
+//        ChatMessage chatMessage7 = new ChatMessage(ChatMessage.MSG_TYPE_TEXT,
+//                ChatMessage.MSG_STATE_SENDING, TO_USER, "avatar", FROM_USER, "avatar",
+//                "<a href=\"http://kymjs.com\">]自定义链接</a>也是支持的kkkk" + new Date(System.currentTimeMillis()), true, true, new Date(System.currentTimeMillis()));
+//
+        datas.add(chatMessage);
+//        datas.add(chatMessage7);
 
         adapter = new ChatAdapter(this, datas, getOnChatItemClickListener());
         mRealListView.setAdapter(adapter);
-    }
-
-    private void createReplayMsg(Message message) {
-        final Message reMessage = new Message(message.getType(), Message.MSG_STATE_SUCCESS, "Tom",
-                "avatar", "Jerry", "avatar", message.getType() == Message.MSG_TYPE_TEXT ? "返回:"
-                + message.getContent() : message.getContent(), false,
-                true, new Date());
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000 * (new Random().nextInt(3) + 1));
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            datas.add(reMessage);
-                            adapter.refresh(datas);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     @Override
@@ -209,6 +207,11 @@ public class ChatActivity extends AppCompatActivity {
                 REQUEST_CODE_GETIMAGE_BYSDCARD);
 
     }
+    private static int REQUEST_CAMERA=1;
+    private void goToCamara(){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);// 启动系统相机
+        startActivityForResult(intent, REQUEST_CAMERA);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -220,10 +223,10 @@ public class ChatActivity extends AppCompatActivity {
             Uri dataUri = data.getData();
             if (dataUri != null) {
                 File file = FileUtils.uri2File(ChatActivity.this, dataUri);
-                Message message = new Message(Message.MSG_TYPE_PHOTO, Message.MSG_STATE_SUCCESS,
-                        "Tom", "avatar", "Jerry",
+                ChatMessage chatMessage = new ChatMessage(ChatMessage.MSG_TYPE_PHOTO, ChatMessage.MSG_STATE_SUCCESS,
+                        FROM_USER, "avatar", TO_USER,
                         "avatar", file.getAbsolutePath(), true, true, new Date());
-                datas.add(message);
+                datas.add(chatMessage);
                 adapter.refresh(datas);
             }
         }
@@ -258,6 +261,8 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onTextClick(int position) {
+                Toast.makeText(ChatActivity.this, datas.get(position).getContent(), Toast.LENGTH_SHORT).show();
+
             }
 
             @Override
